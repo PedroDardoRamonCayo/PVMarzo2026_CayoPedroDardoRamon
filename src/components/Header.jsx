@@ -11,6 +11,7 @@ export default function Header() {
     logout();
     navigate('/');
   };
+  
 
   return (
     <Navbar bg="light" expand="lg" className="mb-3">
