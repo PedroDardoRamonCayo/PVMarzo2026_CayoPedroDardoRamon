@@ -5,7 +5,7 @@ export default function Home() {
     <div>
       <h1>Bienvenido al Hotel</h1>
       <nav>
-        <Link to="/login">Login</Link> | <Link to="/register">Registro</Link>
+        <Link to="/register">Registro</Link> | <Link to="/login">Login</Link>
       </nav>
     </div>
   );

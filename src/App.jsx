@@ -9,6 +9,7 @@ import Register from './components/Aut/Register';
 import PassengerDashboard from './pages/passedashboard';
 import AdminDashboard from './pages/admindashboard';
 import NotFound from './pages/notfound';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
@@ -19,8 +20,22 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/passenger" element={<PassengerDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route
+              path="/passenger"
+              element={
+                <PrivateRoute allowedRoles={["Pasajero"]}>
+                  <PassengerDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute allowedRoles={["Administrador"]}>
+                  <AdminDashboard />
+                </PrivateRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
