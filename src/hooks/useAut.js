@@ -2,7 +2,6 @@ import { useContext } from 'react';
 import { DataContext } from '../context/DataContext';
 import { AuthContext } from '../context/AutContext';
 
-// hook que expone funciones de registro y login
 export default function useAut() {
   const { users, setUsers } = useContext(DataContext);
   const { login } = useContext(AuthContext);

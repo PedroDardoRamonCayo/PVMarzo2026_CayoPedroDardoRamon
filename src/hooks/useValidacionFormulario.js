@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 
-// reglas simples de validación para el formulario de usuario
 function validaCampos(campos) {
   const { username, password } = campos;
   const esUsernameValido =
