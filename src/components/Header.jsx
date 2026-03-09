@@ -21,7 +21,10 @@ export default function Header() {
         <Button
           variant="primary"
           className="me-3"
-          onClick={() => navigate('/reservation')}
+          onClick={() => {
+            if (!user) navigate('/login');
+            else navigate('/reservation');
+          }}
         >
           Reservar
         </Button>
@@ -40,7 +43,9 @@ export default function Header() {
             )}
             {user && (
               <>
-                <Nav.Link disabled>{user.username}</Nav.Link>
+                <Nav.Link as={Link} to="/passenger">
+                  {user.username}
+                </Nav.Link>
                 <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>

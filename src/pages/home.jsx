@@ -23,7 +23,11 @@ export default function Home() {
   const navigate = useNavigate();
 
   const handleReserve = () => {
-    navigate('/reservation');
+    if (!user) {
+      navigate('/login');
+    } else {
+      navigate('/reservation');
+    }
   };
 
   return (

@@ -26,7 +26,7 @@ export default function Login() {
 
     const resultado = loginUsuario({ identifier, password });
     if (resultado.success) {
-      navigate('/passenger');
+      navigate('/');
     } else {
       alert(resultado.message);
     }
