@@ -1,39 +1,25 @@
 import { useState, useMemo } from 'react';
 
 function validaCampos(campos) {
-  const {
-    username,
-    password,
-    dni,
-    nombre,
-    apellido,
-    email,
-    identifier,
-    fechaNacimiento,
-    nacionalidad,
-  } = campos;
+  const { username, password, documento, nombre, apellido, email, identifier } = campos;
   const esUsernameValido =
     username && username.length > 3 && /^[^0-9]+$/.test(username);
   const esPasswordValida = password && password.length > 3;
-  const esDniValido = dni && /^[0-9]{7,10}$/.test(dni.trim());
+  const esDocumentoValido =
+    documento && /^[0-9]{8}$/.test(documento.trim());
   const esNombreValido = nombre && nombre.trim().length > 0;
   const esApellidoValido = apellido && apellido.trim().length > 0;
   const esEmailValido =
     email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const esIdentifierValido = identifier && identifier.trim().length > 3;
-  const esFechaNacimientoValida =
-    fechaNacimiento && new Date(fechaNacimiento) < new Date();
-  const esNacionalidadValida = nacionalidad && nacionalidad.trim().length > 0;
   return {
     username: esUsernameValido,
     password: esPasswordValida,
-    dni: esDniValido,
+    documento: esDocumentoValido,
     nombre: esNombreValido,
     apellido: esApellidoValido,
     email: esEmailValido,
     identifier: esIdentifierValido,
-    fechaNacimiento: esFechaNacimientoValida,
-    nacionalidad: esNacionalidadValida,
   };
 }
 

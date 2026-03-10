@@ -36,13 +36,13 @@ export default function Home() {
   const habitacionesDisponibles = rooms.filter(room => room.estado === 'Disponible');
 
   return (
-    <Container>
+    <Container fluid className="home-page px-3 px-lg-5">
       <h1 className="my-4 text-center">Bienvenido al Hotel</h1>
       <Row className="g-4 mb-4">
         {fotos.map((f, idx) => (
           <Col key={idx} md={4}>
-            <Card>
-              <Card.Img variant="top" src={f.src} />
+            <Card className="home-gallery-card">
+              <Card.Img className="home-gallery-img" variant="top" src={f.src} />
               <Card.Body>
                 <Card.Text>{f.desc}</Card.Text>
               </Card.Body>

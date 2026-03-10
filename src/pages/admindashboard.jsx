@@ -1,9 +1,9 @@
 import { useContext, useState } from 'react';
 import { DataContext } from '../context/DataContext';
-import { Container, Table, Button, Form, Card } from 'react-bootstrap';
+import { Container, Table, Button, Form, Card, Row, Col } from 'react-bootstrap';
 
 export default function AdminDashboard() {
-  const { rooms, setRooms } = useContext(DataContext);
+  const { rooms, setRooms, reservations } = useContext(DataContext);
   const [form, setForm] = useState({
     codigo: '',
     tipo: 'Simple',
@@ -53,9 +53,35 @@ export default function AdminDashboard() {
     });
   };
 
+  const disponibles = rooms.filter(r => r.estado === 'Disponible').length;
+  const noDisponibles = rooms.filter(r => r.estado !== 'Disponible').length;
+
   return (
     <Container className="mt-4">
       <h2>Panel de administrador</h2>
+
+      <Row className="g-3 mb-3">
+        <Col md={4}>
+          <Card>
+            <Card.Body>
+              <Card.Title>Habitaciones</Card.Title>
+              <div>Total: {rooms.length}</div>
+              <div>Disponibles: {disponibles}</div>
+              <div>No disponibles: {noDisponibles}</div>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={4}>
+          <Card>
+            <Card.Body>
+              <Card.Title>Reservas</Card.Title>
+              <div>Total registradas: {reservations.length}</div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <h4>Habitaciones</h4>
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -84,6 +110,42 @@ export default function AdminDashboard() {
               </td>
             </tr>
           ))}
+        </tbody>
+      </Table>
+
+      <h4 className="mt-4">Reservas realizadas</h4>
+      <Table striped bordered hover responsive>
+        <thead>
+          <tr>
+            <th>Codigo reserva</th>
+            <th>Fecha reserva</th>
+            <th>Cantidad dias</th>
+            <th>Usuario (DNI)</th>
+            <th>Habitacion</th>
+            <th>Tipo</th>
+            <th>Costo por tipo</th>
+            <th>Costo total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reservations.length === 0 ? (
+            <tr>
+              <td colSpan={8}>No hay reservas registradas.</td>
+            </tr>
+          ) : (
+            reservations.map(res => (
+              <tr key={res.codigo}>
+                <td>{res.codigo}</td>
+                <td>{res.fechaReserva}</td>
+                <td>{res.cantidadDias}</td>
+                <td>{res.usuarioDni}</td>
+                <td>{res.room?.codigo || res.habitacionCodigo}</td>
+                <td>{res.room?.tipo || '-'}</td>
+                <td>${res.room?.costoPorTipo ?? '-'}</td>
+                <td>${res.costoTotal}</td>
+              </tr>
+            ))
+          )}
         </tbody>
       </Table>
 

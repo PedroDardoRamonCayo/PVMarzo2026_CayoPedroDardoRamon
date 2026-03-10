@@ -7,21 +7,17 @@ export default function useAut() {
   const { login } = useContext(AuthContext);
 
   function registrarUsuario(nuevo) {
-    const existe = users.find(
-      u =>
-        u.username === nuevo.username ||
-        u.email === nuevo.email ||
-        u.dni === nuevo.dni
-    );
+    const existe = users.find(u => u.username === nuevo.username);
     if (existe) {
-      return { success: false, message: 'Usuario, correo o DNI ya registrado' };
+      return { success: false, message: 'El usuario ya existe' };
     }
-
-    setUsers([...users, { ...nuevo, rol: nuevo.tipo }]);
+    // store additional basic info as well
+    setUsers([...users, nuevo]);
     return { success: true };
   }
 
   function loginUsuario({ identifier, password }) {
+    // identifier puede ser nombre de usuario o correo
     const usuario = users.find(
       u =>
         (u.username === identifier || u.email === identifier) &&
@@ -29,9 +25,6 @@ export default function useAut() {
     );
     if (!usuario) {
       return { success: false, message: 'Usuario o contraseña incorrecta' };
-    }
-    if (usuario.estado === 'Inactivo') {
-      return { success: false, message: 'El usuario se encuentra inactivo' };
     }
     login(usuario);
     return { success: true, user: usuario };
