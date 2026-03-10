@@ -1,7 +1,9 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AutContext';
+import { DataContext } from '../context/DataContext';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import ListRoom from '../components/Rooms/ListRoom';
 
 const fotos = [
   {
@@ -20,6 +22,7 @@ const fotos = [
 
 export default function Home() {
   const { user } = useContext(AuthContext);
+  const { rooms } = useContext(DataContext);
   const navigate = useNavigate();
 
   const handleReserve = () => {
@@ -30,10 +33,12 @@ export default function Home() {
     }
   };
 
+  const habitacionesDisponibles = rooms.filter(room => room.estado === 'Disponible');
+
   return (
     <Container>
       <h1 className="my-4 text-center">Bienvenido al Hotel</h1>
-      <Row className="g-4">
+      <Row className="g-4 mb-4">
         {fotos.map((f, idx) => (
           <Col key={idx} md={4}>
             <Card>
@@ -45,6 +50,21 @@ export default function Home() {
           </Col>
         ))}
       </Row>
+
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2 className="mb-0">Habitaciones para rentar</h2>
+        <Button variant="primary" onClick={handleReserve}>
+          Rentar ahora
+        </Button>
+      </div>
+
+      {habitacionesDisponibles.length > 0 ? (
+        <ListRoom rooms={habitacionesDisponibles} />
+      ) : (
+        <Card className="p-3">
+          <Card.Text className="mb-0">No hay habitaciones disponibles por el momento.</Card.Text>
+        </Card>
+      )}
     </Container>
   );
 }

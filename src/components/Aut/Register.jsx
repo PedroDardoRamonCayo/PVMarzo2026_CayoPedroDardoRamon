@@ -8,34 +8,51 @@ export default function Register() {
   const { registrarUsuario } = useAut();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [documento, setDocumento] = useState('');
+  const [dni, setDni] = useState('');
   const [nombre, setNombre] = useState('');
   const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
+  const [fechaNacimiento, setFechaNacimiento] = useState('');
+  const [tipo, setTipo] = useState('Pasajero');
+  const [nacionalidad, setNacionalidad] = useState('Argentina');
+  const [estado, setEstado] = useState('Activo');
   const navigate = useNavigate();
 
-  const campos = { username, password, documento, nombre, apellido, email };
+  const campos = { username, password, dni, nombre, apellido, email, fechaNacimiento, nacionalidad };
   const { esValido, tocado, marcarTocado } = useValidacionFormulario(campos, 'usuario');
 
   const handleSubmit = e => {
     e.preventDefault();
-    if (!username || !password || !documento || !nombre || !apellido || !email) {
+    if (!username || !password || !dni || !nombre || !apellido || !email || !fechaNacimiento || !tipo || !nacionalidad || !estado) {
       alert('Completa todos los campos');
       return;
     }
     if (
       !esValido.username ||
       !esValido.password ||
-      !esValido.documento ||
+      !esValido.dni ||
       !esValido.nombre ||
       !esValido.apellido ||
-      !esValido.email
+      !esValido.email ||
+      !esValido.fechaNacimiento ||
+      !esValido.nacionalidad
     ) {
       alert('Por favor corrige los errores del formulario');
       return;
     }
 
-    const nuevoUsuario = { username, password, documento, nombre, apellido, email, rol: 'Pasajero' };
+    const nuevoUsuario = {
+      username,
+      password,
+      dni,
+      nombre,
+      apellido,
+      fechaNacimiento,
+      tipo,
+      nacionalidad,
+      estado,
+      email,
+    };
     const resultado = registrarUsuario(nuevoUsuario);
     if (resultado.success) {
       alert('Usuario registrado con éxito');
@@ -67,19 +84,19 @@ export default function Register() {
             </Form.Control.Feedback>
           </Form.Group>
           <Form.Group className="mb-3">
-            <Form.Label>🪪 Documento</Form.Label>
+            <Form.Label>🪪 DNI</Form.Label>
             <Form.Control
               type="text"
-              placeholder="Número de documento"
-              value={documento}
-              onChange={e => setDocumento(e.target.value)}
-              onBlur={() => marcarTocado('documento')}
-              isValid={tocado.documento && esValido.documento}
-              isInvalid={tocado.documento && !esValido.documento}
+              placeholder="Numero de DNI"
+              value={dni}
+              onChange={e => setDni(e.target.value)}
+              onBlur={() => marcarTocado('dni')}
+              isValid={tocado.dni && esValido.dni}
+              isInvalid={tocado.dni && !esValido.dni}
               required
             />
             <Form.Control.Feedback type="invalid">
-              Debe ingresar el documento.
+              Debe ingresar un DNI valido.
             </Form.Control.Feedback>
           </Form.Group>
           <Form.Group className="mb-3">
@@ -132,6 +149,52 @@ export default function Register() {
           </Form.Group>
 
           <Form.Group className="mb-3">
+            <Form.Label>🎂 Fecha de nacimiento</Form.Label>
+            <Form.Control
+              type="date"
+              value={fechaNacimiento}
+              onChange={e => setFechaNacimiento(e.target.value)}
+              onBlur={() => marcarTocado('fechaNacimiento')}
+              isValid={tocado.fechaNacimiento && esValido.fechaNacimiento}
+              isInvalid={tocado.fechaNacimiento && !esValido.fechaNacimiento}
+              required
+            />
+            <Form.Control.Feedback type="invalid">
+              Debe ingresar una fecha valida.
+            </Form.Control.Feedback>
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>🧾 Tipo de usuario</Form.Label>
+            <Form.Select value={tipo} onChange={e => setTipo(e.target.value)}>
+              <option value="Pasajero">Pasajero</option>
+              <option value="Administrador">Administrador</option>
+            </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>🌎 Nacionalidad</Form.Label>
+            <Form.Select
+              value={nacionalidad}
+              onChange={e => setNacionalidad(e.target.value)}
+              onBlur={() => marcarTocado('nacionalidad')}
+              isValid={tocado.nacionalidad && esValido.nacionalidad}
+              isInvalid={tocado.nacionalidad && !esValido.nacionalidad}
+            >
+              <option value="Argentina">Argentina</option>
+              <option value="Uruguaya">Uruguaya</option>
+              <option value="Brasilenia">Brasilenia</option>
+              <option value="Chilena">Chilena</option>
+              <option value="Otra">Otra</option>
+            </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>✅ Estado</Form.Label>
+            <Form.Select value={estado} onChange={e => setEstado(e.target.value)}>
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group className="mb-3">
             <Form.Label>🔒 Contraseña</Form.Label>
             <Form.Control
               type="password"
@@ -157,16 +220,19 @@ export default function Register() {
             disabled={
               !username ||
               !password ||
-              !documento ||
+              !dni ||
               !nombre ||
               !apellido ||
               !email ||
+              !fechaNacimiento ||
               !esValido.username ||
               !esValido.password ||
-              !esValido.documento ||
+              !esValido.dni ||
               !esValido.nombre ||
               !esValido.apellido ||
-              !esValido.email
+              !esValido.email ||
+              !esValido.fechaNacimiento ||
+              !esValido.nacionalidad
             }
           >
             Registrarse

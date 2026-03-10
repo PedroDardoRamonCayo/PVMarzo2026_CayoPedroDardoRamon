@@ -21,7 +21,14 @@ function App() {
           <Header />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/reservation" element={<Reservation />} />
+            <Route
+              path="/reservation"
+              element={
+                <PrivateRoute allowedRoles={["Pasajero"]}>
+                  <Reservation />
+                </PrivateRoute>
+              }
+            />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route

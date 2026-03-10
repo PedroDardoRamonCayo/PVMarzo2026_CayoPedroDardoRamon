@@ -1,153 +1,225 @@
 import { useState, useContext, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AutContext';
 import { DataContext } from '../context/DataContext';
-import { Container, Form, Button, Row, Col, Card, Alert } from 'react-bootstrap';
-
-const habitaciones = [
-  { id: 1, nombre: 'Individual', precio: 50 },
-  { id: 2, nombre: 'Doble', precio: 75 },
-  { id: 3, nombre: 'Suite', precio: 150 },
-];
+import { Container, Card, Alert, Table } from 'react-bootstrap';
+import ReservationSummary from '../components/Reservacion/ReservationSummary';
+import ReservacionForm from '../components/Reservacion/ReservacionForm';
 
 export default function Reservation() {
   const { user } = useContext(AuthContext);
-  const { reservations, setReservations } = useContext(DataContext);
-  const navigate = useNavigate();
-  const [seleccion, setSeleccion] = useState(
-    habitaciones.map(h => ({ ...h, cantidad: 0 }))
-  );
-  const [desde, setDesde] = useState('');
-  const [hasta, setHasta] = useState('');
+  const { reservations, setReservations, rooms } = useContext(DataContext);
+  const [tipoHabitacion, setTipoHabitacion] = useState('Simple');
+  const [fechaDesde, setFechaDesde] = useState('');
+  const [fechaHasta, setFechaHasta] = useState('');
+  const [reservaConfirmada, setReservaConfirmada] = useState(null);
 
-  const diasTotales = useMemo(() => {
-    if (!desde || !hasta) return 0;
-    const d1 = new Date(desde);
-    const d2 = new Date(hasta);
-    const diff = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+  const cantidadDias = useMemo(() => {
+    if (!fechaDesde || !fechaHasta) return 0;
+    const desde = new Date(fechaDesde);
+    const hasta = new Date(fechaHasta);
+    const diff = Math.ceil((hasta - desde) / (1000 * 60 * 60 * 24));
     return diff > 0 ? diff : 0;
-  }, [desde, hasta]);
+  }, [fechaDesde, fechaHasta]);
 
-  // calculate existing reservation info
-  const reservedSuites = useMemo(() => {
-    return reservations.reduce((acc, r) => {
-      const room = r.rooms.find(h => h.id === 3);
-      return acc + (room ? room.cantidad : 0);
-    }, 0);
-  }, [reservations]);
+  function getReservationRange(res) {
+    if (res.fechaDesde && res.fechaHasta) {
+      return { start: new Date(res.fechaDesde), end: new Date(res.fechaHasta) };
+    }
+    if (res.fechaReserva && res.cantidadDias) {
+      const start = new Date(res.fechaReserva);
+      const end = new Date(start);
+      end.setDate(end.getDate() + Number(res.cantidadDias));
+      return { start, end };
+    }
+    return null;
+  }
 
-  const reservedDates = useMemo(() => {
-    return reservations.map(r => `${r.desde} → ${r.hasta}`);
-  }, [reservations]);
+  function rangesOverlap(startA, endA, startB, endB) {
+    return startA < endB && startB < endA;
+  }
 
-  const handleChange = (idx, field, value) => {
-    setSeleccion(prev => {
-      const nuevos = [...prev];
-      nuevos[idx][field] = Number(value);
-      return nuevos;
+  const habitacionesDisponibles = rooms.filter(room => {
+    if (room.tipo !== tipoHabitacion) return false;
+    if (!fechaDesde || !fechaHasta || cantidadDias <= 0) return true;
+
+    const requestedStart = new Date(fechaDesde);
+    const requestedEnd = new Date(fechaHasta);
+
+    const conflict = reservations.some(res => {
+      const sameRoom = res.habitacionCodigo === room.codigo || res.room?.codigo === room.codigo;
+      if (!sameRoom) return false;
+      const range = getReservationRange(res);
+      if (!range) return false;
+      return rangesOverlap(requestedStart, requestedEnd, range.start, range.end);
     });
-  };
 
-  const totalCost = useMemo(() => {
-    return seleccion.reduce(
-      (acc, h) => acc + h.cantidad * diasTotales * h.precio,
-      0
-    );
-  }, [seleccion, diasTotales]);
+    return !conflict;
+  });
+  const habitacionSeleccionada = habitacionesDisponibles[0] || null;
+  const costoEstimado = habitacionSeleccionada
+    ? Number(habitacionSeleccionada.costoPorTipo) * Number(cantidadDias || 0)
+    : 0;
 
   const handleSubmit = e => {
     e.preventDefault();
-    if (!user) {
-      navigate('/login');
+    if (!habitacionSeleccionada) {
+      alert('No hay habitaciones disponibles para el tipo seleccionado');
       return;
     }
-    // build reservation object
-    const nueva = {
-      desde,
-      hasta,
-      rooms: seleccion.filter(h => h.cantidad > 0),
+
+    if (!fechaDesde || !fechaHasta || cantidadDias <= 0) {
+      alert('Selecciona un rango de fechas valido');
+      return;
+    }
+
+    const dias = Number(cantidadDias);
+    const fechaReserva = new Date().toISOString().slice(0, 10);
+    const codigoReserva = `RES-${Date.now()}`;
+    const costoTotal = dias * Number(habitacionSeleccionada.costoPorTipo);
+
+    const nuevaReserva = {
+      codigo: codigoReserva,
+      fechaReserva,
+      fechaDesde,
+      fechaHasta,
+      cantidadDias: dias,
+      usuarioDni: user.documento || user.dni,
+      habitacionCodigo: habitacionSeleccionada.codigo,
+      costoTotal,
       user: user.username,
+      passenger: {
+        dni: user.documento || user.dni,
+        apellido: user.apellido,
+        nombre: user.nombre,
+        fechaNacimiento: user.fechaNacimiento,
+        tipo: user.tipo,
+        nacionalidad: user.nacionalidad,
+        estado: user.estado,
+      },
+      room: habitacionSeleccionada,
     };
-    setReservations([...reservations, nueva]);
-    alert('Gracias por su reserva');
-    navigate('/');
+
+    setReservations([...reservations, nuevaReserva]);
+    setReservaConfirmada(nuevaReserva);
   };
 
   return (
     <Container className="mt-4">
-      <h2>Reservas actuales</h2>
-      {reservations.length === 0 ? (
-        <Alert variant="info">No hay reservas todavía.</Alert>
-      ) : (
-        <div className="mb-3">
-          {reservedDates.map((d, i) => (
-            <div key={i}>{d}</div>
-          ))}
-          <div className="mt-2">
-            Suites reservadas en total: <strong>{reservedSuites}</strong>
-          </div>
-        </div>
+      <h2>Reserva de habitaciones</h2>
+      {reservaConfirmada && <ReservationSummary reservation={reservaConfirmada} />}
+
+      {!reservaConfirmada && (
+        <>
+          <ReservacionForm
+            tipoHabitacion={tipoHabitacion}
+            setTipoHabitacion={setTipoHabitacion}
+            fechaDesde={fechaDesde}
+            setFechaDesde={setFechaDesde}
+            fechaHasta={fechaHasta}
+            setFechaHasta={setFechaHasta}
+            cantidadDias={cantidadDias}
+            onSubmit={handleSubmit}
+            disabled={!habitacionSeleccionada || cantidadDias <= 0}
+          />
+
+          <h4 className="mt-4">Habitaciones disponibles ({tipoHabitacion})</h4>
+          {habitacionesDisponibles.length > 0 ? (
+            <Table striped bordered hover responsive className="mb-3">
+              <thead>
+                <tr>
+                  <th>Codigo</th>
+                  <th>Tipo</th>
+                  <th>Servicios</th>
+                  <th>Descripcion</th>
+                  <th>Costo por tipo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {habitacionesDisponibles.map(room => (
+                  <tr key={room.codigo}>
+                    <td>{room.codigo}</td>
+                    <td>{room.tipo}</td>
+                    <td>{room.servicios}</td>
+                    <td>{room.descripcion}</td>
+                    <td>${room.costoPorTipo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : null}
+
+          {!habitacionSeleccionada && (
+            <Alert variant="warning">
+              No hay habitaciones disponibles de tipo {tipoHabitacion}.
+            </Alert>
+          )}
+
+          {habitacionSeleccionada && (
+            <Card className="mb-3">
+              <Card.Body>
+                <Card.Title>Habitacion seleccionada</Card.Title>
+                <Card.Text>
+                  Codigo: {habitacionSeleccionada.codigo}
+                  <br />
+                  Tipo: {habitacionSeleccionada.tipo}
+                  <br />
+                  Servicios: {habitacionSeleccionada.servicios}
+                  <br />
+                  Descripcion: {habitacionSeleccionada.descripcion}
+                  <br />
+                  Costo por dia: ${habitacionSeleccionada.costoPorTipo}
+                </Card.Text>
+              </Card.Body>
+            </Card>
+          )}
+
+          {habitacionSeleccionada && cantidadDias > 0 && (
+            <Alert variant="success">
+              Costo final estimado antes de reservar: <strong>${costoEstimado}</strong>
+            </Alert>
+          )}
+
+        </>
       )}
-      <hr />
-      <h2>Selecciona tus fechas</h2>
-      <Form onSubmit={handleSubmit}>
-        <Row className="g-3 mb-3">
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Desde</Form.Label>
-              <Form.Control
-                type="date"
-                value={desde}
-                onChange={e => setDesde(e.target.value)}
-                required
-              />
-            </Form.Group>
-          </Col>
-          <Col md={6}>
-            <Form.Group>
-              <Form.Label>Hasta</Form.Label>
-              <Form.Control
-                type="date"
-                value={hasta}
-                onChange={e => setHasta(e.target.value)}
-                required
-              />
-            </Form.Group>
-          </Col>
-        </Row>
-        {diasTotales > 0 && (
-          <p>
-            Total de d�as: <strong>{diasTotales}</strong>
-          </p>
-        )}
-        <Row className="g-3">
-          {seleccion.map((h, idx) => (
-            <Col md={4} key={h.id}>
-              <Card>
-                <Card.Body>
-                  <Card.Title>{h.nombre}</Card.Title>
-                  <Card.Text>Precio por d�a: ${h.precio}</Card.Text>
-                  <Form.Group>
-                    <Form.Label>Cantidad</Form.Label>
-                    <Form.Control
-                      type="number"
-                      min="0"
-                      value={h.cantidad}
-                      onChange={e => handleChange(idx, 'cantidad', e.target.value)}
-                    />
-                  </Form.Group>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-        {diasTotales > 0 && (
-          <h4 className="mt-3">Total a pagar: ${totalCost}</h4>
-        )}
-        <Button type="submit" className="mt-4" disabled={diasTotales === 0}>
-          Finalizar reserva
-        </Button>
-      </Form>
+
+      {reservations.length > 0 && (
+        <>
+          <Alert variant="info" className="mt-4">
+            Reservas registradas: {reservations.length}
+          </Alert>
+          <h4>Reservas realizadas</h4>
+          <Table striped bordered hover responsive>
+            <thead>
+              <tr>
+                <th>Codigo Reserva</th>
+                <th>Fecha Reserva</th>
+                <th>Desde</th>
+                <th>Hasta</th>
+                <th>Dias</th>
+                <th>Habitacion</th>
+                <th>Tipo</th>
+                <th>Costo por tipo</th>
+                <th>Costo total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reservations.map(res => (
+                <tr key={res.codigo}>
+                  <td>{res.codigo}</td>
+                  <td>{res.fechaReserva}</td>
+                  <td>{res.fechaDesde || '-'}</td>
+                  <td>{res.fechaHasta || '-'}</td>
+                  <td>{res.cantidadDias}</td>
+                  <td>{res.room?.codigo}</td>
+                  <td>{res.room?.tipo}</td>
+                  <td>${res.room?.costoPorTipo}</td>
+                  <td>${res.costoTotal}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </>
+      )}
     </Container>
   );
 }

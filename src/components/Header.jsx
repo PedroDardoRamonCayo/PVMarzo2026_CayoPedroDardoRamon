@@ -2,10 +2,12 @@ import React, { useContext } from 'react';
 import { Navbar, Container, Nav, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AutContext';
+import { getUserRole } from '../utils/role';
 
 export default function Header() {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const userRole = getUserRole(user);
 
   const handleLogout = () => {
     logout();
@@ -24,7 +26,9 @@ export default function Header() {
           className="me-3"
           onClick={() => {
             if (!user) navigate('/login');
-            else navigate('/reservation');
+            else if (userRole === 'Pasajero') navigate('/reservation');
+            else if (userRole === 'Administrador') navigate('/admin');
+            else navigate('/');
           }}
         >
           Reservar
@@ -44,8 +48,8 @@ export default function Header() {
             )}
             {user && (
               <>
-                <Nav.Link as={Link} to="/passenger">
-                  {user.username}
+                <Nav.Link as={Link} to={userRole === 'Administrador' ? '/admin' : '/passenger'}>
+                  {user.nombre ? `${user.nombre} ${user.apellido}` : user.username}
                 </Nav.Link>
                 <Button variant="outline-secondary" size="sm" onClick={handleLogout}>
                   Logout

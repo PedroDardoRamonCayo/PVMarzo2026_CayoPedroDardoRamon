@@ -3,10 +3,11 @@ import { Form, Button, Container, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import useAut from '../../hooks/useAut';
 import useValidacionFormulario from '../../hooks/useValidacionFormulario';
+import { getUserRole } from '../../utils/role';
 
 export default function Login() {
   const { loginUsuario } = useAut();
-  const [identifier, setIdentifier] = useState(''); // username or email
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
@@ -26,7 +27,14 @@ export default function Login() {
 
     const resultado = loginUsuario({ identifier, password });
     if (resultado.success) {
-      navigate('/');
+      const role = getUserRole(resultado.user);
+      if (role === 'Administrador') {
+        navigate('/admin');
+      } else if (role === 'Pasajero') {
+        navigate('/passenger');
+      } else {
+        navigate('/');
+      }
     } else {
       alert(resultado.message);
     }
